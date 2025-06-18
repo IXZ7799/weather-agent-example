@@ -58,12 +58,6 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
-
-The application is deployed to Netlify. You can redeploy by pushing changes to the repository or using the Netlify CLI.
-
-## Can I connect a custom domain to my application?
-
 Yes, you can!
 
 To connect a domain, you can use Netlify's custom domain settings. This can be done through the Netlify dashboard after claiming your site.
