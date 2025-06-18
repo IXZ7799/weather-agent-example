@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Whisperer API Test - Local Dev</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, textarea {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>LLM Whisperer API Test</h1>
+    <div class="container">
+        <div class="form-group">
+            <label for="apiKey">API Key:</label>
+            <input type="password" id="apiKey" placeholder="Enter your LLM Whisperer API Key">
+        </div>
+        
+        <div class="form-group">
+            <label for="file">Select Document:</label>
+            <input type="file" id="file">
+        </div>
+        
+        <div class="form-group">
+            <label for="options">API Options (JSON):</label>
+            <textarea id="options" rows="5">{
+  "output_mode": "layout_preserving",
+  "processing_mode": "ocr",
+  "force_text_processing": true,
+  "pages_to_extract": "all",
+  "timeout": 200
+}</textarea>
+        </div>
+        
+        <button id="processBtn">Process Document</button>
+        
+        <div class="result" id="result">Results will appear here...</div>
+    </div>
+
+    <script>
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const file = document.getElementById('file').files[0];
+            const optionsText = document.getElementById('options').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!apiKey) {
+                resultDiv.innerHTML = '<span class="error">Please enter your API Key</span>';
+                return;
+            }
+            
+            if (!file) {
+                resultDiv.innerHTML = '<span class="error">Please select a file</span>';
+                return;
+            }
+            
+            let options;
+            try {
+                options = JSON.parse(optionsText);
+            } catch (e) {
+                resultDiv.innerHTML = `<span class="error">Invalid JSON options: ${e.message}</span>`;
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Processing document, please wait...';
+            
+            try {
+                // Convert file to base64 using FileReader instead
+                const base64File = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+                        const base64 = reader.result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = error => reject(error);
+                });
+                
+                // Prepare request body
+                const requestBody = {
+                    file_data: base64File,
+                    file_name: file.name,
+                    ...options
+                };
+                
+                // Call the local development API endpoint directly
+                const response = await fetch('http://localhost:8080/api/llmwhisperer/api/v2/whisper', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        file_data: base64File,
+                        file_name: file.name,
+                        ...options
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    resultDiv.innerHTML = `<span class="error">API Error (${response.status}): ${JSON.stringify(data, null, 2)}</span>`;
+                    return;
+                }
+                
+                // Display successful result
+                resultDiv.innerHTML = `<span class="success">Success!</span><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>

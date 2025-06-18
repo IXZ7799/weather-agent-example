@@ -1,0 +1,15 @@
+{
+  "name": "llm-whisperer-test",
+  "version": "1.0.0",
+  "description": "Test server for LLM Whisperer API",
+  "main": "llm-whisperer-proxy.js",
+  "scripts": {
+    "start": "node llm-whisperer-proxy.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "node-fetch": "^2.6.9"
+  }
+}
